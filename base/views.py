@@ -57,7 +57,7 @@ def logoutUser(request):
 def home(request):
     product_all = product.objects.all()
     categories_all = categories.objects.all()
-    context = {'product_all' : product_all, 'categories_all' : categories_all}
+    context = {'product_all' : product_all, 'categories_all' : categories_all, 'order_item' : order_item}
     return render(request, 'base/home.html', context)
 
 def produk_list(request):
@@ -71,6 +71,11 @@ class product_detail(DetailView):
     model = product
     context_object_name = 'product'
     template_name = 'base/product_detail.html'
+
+def cartList(request):
+    order_item = OrderProdukItem.objects.all()
+    context = {'order_item' : order_item}
+    return render(request, 'base/cart.html', context)
 
 def add_to_cart(request, slug):
     if request.user.is_authenticated:
