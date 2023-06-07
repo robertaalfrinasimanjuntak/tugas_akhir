@@ -94,31 +94,44 @@
                     </h6>
                   </div>
                 </td>
-                <td class="text-center">
-                  {{order.produk_item.total_diskon_harga}}
-                </td>
+                <td class="text-center">{{order.get_harga_diskon}}</td>
                 <td class="text-center qty-icons">
-                  <button
-                    onclick="this.parentNode.querySelector('input[type=number]').stepDown()"
-                    class="btn btn-icon btn-soft-primary minus"
-                  >
-                    -
-                  </button>
-                  <input
-                    min="0"
-                    name="quantity"
-                    value="{{ order.quantity }}"
-                    type="number"
-                    class="btn btn-icon btn-soft-primary qty-btn quantity"
-                  />
-                  <button
-                    onclick="this.parentNode.querySelector('input[type=number]').stepUp()"
-                    class="btn btn-icon btn-soft-primary plus"
-                  >
-                    +
-                  </button>
+                  <form method="POST" action="{% url 'update_quantity' %}">
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="btn btn-icon btn-soft-primary minus decrement-btn"
+                      name="action"
+                      value="decrease"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="hidden"
+                      name="product_id"
+                      value="{{ order.id }}"
+                    />
+                    <input
+                      min="0"
+                      name="quantity"
+                      value="{{ order.quantity }}"
+                      type="number"
+                      class="btn btn-icon btn-soft-primary qty-btn quantity quantity-input"
+                    />
+
+                    <button
+                      class="btn btn-icon btn-soft-primary plus increment-btn"
+                      type="submit"
+                      name="action"
+                      value="increase"
+                    >
+                      +
+                    </button>
+                  </form>
                 </td>
-                <td class="text-end fw-bold pe-4">$510.00</td>
+                <td class="text-end fw-bold pe-4">
+                  {{order.get_harga_diskon_peritem}}
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -130,10 +143,7 @@
     <!--end row-->
     <div class="row">
       <div class="col-lg-8 col-md-6 mt-4 pt-2">
-        <a href="javascript:void(0)" class="btn btn-primary">Shop More</a>
-        <a href="javascript:void(0)" class="btn btn-soft-primary ms-2"
-          >Update Cart</a
-        >
+        <a href="{% url 'product-list' %}" class="btn btn-primary">Shop More</a>
       </div>
       <div class="col-lg-4 col-md-6 ms-auto mt-4 pt-2">
         <div class="table-responsive bg-white rounded shadow">
@@ -141,21 +151,23 @@
             <tbody>
               <tr>
                 <td class="h6 ps-4 py-3">Subtotal</td>
-                <td class="text-end fw-bold pe-4">$ 2190</td>
+                <td class="text-end fw-bold pe-4">{{total_belanja}}</td>
               </tr>
               <tr>
-                <td class="h6 ps-4 py-3">Taxes</td>
-                <td class="text-end fw-bold pe-4">$ 219</td>
+                <td class="h6 ps-4 py-3">PPN</td>
+                <td class="text-end fw-bold pe-4">10%</td>
               </tr>
               <tr class="bg-light">
                 <td class="h6 ps-4 py-3">Total</td>
-                <td class="text-end fw-bold pe-4">$ 2409</td>
+                <td class="text-end fw-bold pe-4">
+                  {{total_belanja_dipotong_ppn}}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="mt-4 pt-2 text-end">
-          <a href="shop-checkouts.html" class="btn btn-primary"
+          <a href="{% url 'checkout_page' %}" class="btn btn-primary"
             >Proceed to checkout</a
           >
         </div>
@@ -166,4 +178,58 @@
   </div>
   <!--end container-->
 </section>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  // Menangkap elemen-elemen yang diperlukan
+  const decrementButtons = document.querySelectorAll(".decrement-btn");
+  const incrementButtons = document.querySelectorAll(".increment-btn");
+  const quantityInputs = document.querySelectorAll(".quantity-input");
+
+  // Menambahkan event listener untuk tombol "Kurangi Quantity"
+  decrementButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const orderId = button.getAttribute("data-order-id");
+      const input = document.querySelector(
+        `.quantity-input[data-order-id="${orderId}"]`
+      );
+      input.stepDown(); // Mengurangi nilai input
+
+      // Mengirim permintaan AJAX untuk memperbarui nilai quantity di database
+      updateQuantity(orderId, input.value);
+    });
+  });
+
+  // Menambahkan event listener untuk tombol "Tambah Quantity"
+  incrementButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const orderId = button.getAttribute("data-order-id");
+      const input = document.querySelector(
+        `.quantity-input[data-order-id="${orderId}"]`
+      );
+      input.stepUp(); // Menambahkan nilai input
+
+      // Mengirim permintaan AJAX untuk memperbarui nilai quantity di database
+      updateQuantity(orderId, input.value);
+    });
+  });
+
+  // Fungsi untuk mengirim permintaan AJAX ke server untuk memperbarui nilai quantity
+  function updateQuantity(productId, quantity) {
+    $.ajax({
+      type: "POST",
+      url: "{% url 'update_quantity' %}",
+      data: {
+        order_id: orderId,
+        quantity: quantity,
+      },
+      success: function (response) {
+        console.log("Quantity updated successfully.");
+      },
+      error: function (xhr, status, error) {
+        console.error("An error occurred while updating quantity:", error);
+      },
+    });
+  }
+</script>
 {% endblock content %}

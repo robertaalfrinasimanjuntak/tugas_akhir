@@ -57,7 +57,7 @@ def logoutUser(request):
 def home(request):
     product_all = product.objects.all()
     categories_all = categories.objects.all()
-    context = {'product_all' : product_all, 'categories_all' : categories_all, 'order_item' : order_item}
+    context = {'product_all' : product_all, 'categories_all' : categories_all}
     return render(request, 'base/home.html', context)
 
 def produk_list(request):
@@ -72,9 +72,72 @@ class product_detail(DetailView):
     context_object_name = 'product'
     template_name = 'base/product_detail.html'
 
+def update_quantity(request):
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        action = request.POST.get('action')
+        quantity = int(request.POST.get('quantity'))
+
+        if action == 'increase':
+            quantity += 1
+        elif action == 'decrease':
+            quantity -= 1
+            
+        product = OrderProdukItem.objects.get(id=product_id)
+        product.quantity = quantity
+        product.save()
+
+        # Lakukan logika penyimpanan ke database sesuai kebutuhan
+
+        return redirect('/cart', product_id=product_id)
+
+    return redirect('/cart')
+
+def checkout(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('order_id')
+        alamat = request.POST.get('alamat')
+        negara = request.POST.get('negara')
+        kode_pos = request.POST.get('kode_pos')
+        payment = request.POST.get('payment')
+            
+        order = Order.objects.get(id=order_id)
+        order_item = OrderProdukItem.objects.get(user=request.user)
+        order.alamat = alamat
+        order.negara = negara
+        order.kode_pos = kode_pos
+        order.payment = payment
+        order.ordered = True
+        order_item.ordered = True
+        order.save()
+        order_item.save()
+
+        # Lakukan logika penyimpanan ke database sesuai kebutuhan
+
+        return redirect('/checkout_page', order_id=order_id)
+
+    return redirect('/checkout_page')
+
+def checkoutPage(request):
+    order_status = Order.objects.filter(user=request.user, ordered=False)
+    order_item = OrderProdukItem.objects.filter(user=request.user, ordered=False)
+    order_count = order_item.count()
+    total_belanja = 0
+    for order in order_item:
+        total_belanja += order.quantity * (order.produk_item.price - ((order.produk_item.diskon / 100) * order.produk_item.price))
+    total_belanja_dipotong_ppn = total_belanja - (total_belanja * (10 / 100))
+    context = {'order_status': order_status, 'order_item' : order_item, 'total_belanja': total_belanja, 'total_belanja_dipotong_ppn' : total_belanja_dipotong_ppn, 'order_count' : order_count}
+    if order_status.ordered == True:
+        return redirect('cart')   
+    return render(request, 'base/checkout.html', context)
+
 def cartList(request):
-    order_item = OrderProdukItem.objects.all()
-    context = {'order_item' : order_item}
+    order_item = OrderProdukItem.objects.filter(user=request.user, ordered=False)
+    total_belanja = 0
+    for order in order_item:
+        total_belanja += order.quantity * (order.produk_item.price - ((order.produk_item.diskon / 100) * order.produk_item.price))
+    total_belanja_dipotong_ppn = total_belanja - (total_belanja * (10 / 100))
+    context = {'order_item' : order_item, 'total_belanja': total_belanja, 'total_belanja_dipotong_ppn' : total_belanja_dipotong_ppn}
     return render(request, 'base/cart.html', context)
 
 def add_to_cart(request, slug):

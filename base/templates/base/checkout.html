@@ -1,0 +1,152 @@
+{% extends 'index.html' %} {% block content %} {% load static %}
+
+<section class="bg-half-170 bg-light d-table w-100">
+  <div class="container">
+    <div class="row mt-5 justify-content-center">
+      <div class="col-lg-12 text-center">
+        <div class="pages-heading">
+          <h4 class="title mb-0">Checkouts</h4>
+        </div>
+      </div>
+      <!--end col-->
+    </div>
+    <!--end row-->
+
+    <div class="position-breadcrumb">
+      <nav aria-label="breadcrumb" class="d-inline-block">
+        <ul class="breadcrumb rounded shadow mb-0 px-4 py-2">
+          <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+          <li class="breadcrumb-item">
+            <a href="index-shop.html">Checkouts</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+  <!--end container-->
+</section>
+<!--end section-->
+<div class="position-relative">
+  <div class="shape overflow-hidden text-color-white">
+    <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  </div>
+</div>
+<!-- Hero End -->
+
+<!-- Start -->
+<section class="section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-5 col-lg-4 order-md-last">
+        <div class="card rounded shadow p-4 border-0">
+          {% for order in order_item %}
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="h5 mb-0">Your cart</span>
+            <span class="badge bg-primary rounded-pill">{{order_count}}</span>
+          </div>
+          <ul class="list-group mb-3 border">
+            <li class="d-flex justify-content-between lh-sm p-3 border-bottom">
+              <div>
+                <h6 class="my-0">{{order.produk_item.name_product}}</h6>
+              </div>
+              <span class="text-muted">{{order.get_harga_diskon}}</span>
+            </li>
+            <li class="d-flex justify-content-between p-3">
+              <span>Total (IDR)</span>
+              <strong>{{total_belanja_dipotong_ppn}}</strong>
+            </li>
+            {%endfor%}
+          </ul>
+        </div>
+      </div>
+      <!--end col-->
+
+      <div class="col-md-7 col-lg-8">
+        <div class="card rounded shadow p-4 border-0">
+          <h4 class="mb-3">Billing address</h4>
+          <form
+            class="needs-validation"
+            novalidate
+            method="POST"
+            action="{% url 'checkout' %}"
+          >
+            {% csrf_token %} {% for order in order_status %}
+            <input type="hidden" value="{{ order.id }}" name="order_id" />
+            {%endfor%}
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="address" class="form-label">Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="address"
+                  placeholder="1234 Main St"
+                  required
+                  name="alamat"
+                />
+                <div class="invalid-feedback">
+                  Please enter your shipping address.
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="zip" class="form-label">Country</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="country"
+                  placeholder=""
+                  required
+                  name="negara"
+                />
+                <div class="invalid-feedback">Country required.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="zip" class="form-label">Zip</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="zip"
+                  placeholder=""
+                  required
+                  name="kode_pos"
+                />
+                <div class="invalid-feedback">Zip code required.</div>
+              </div>
+              <div class="col-12 mb-5">
+                <label for="country" class="form-label">Payment</label>
+                <select
+                  class="form-select form-control"
+                  id="country"
+                  required
+                  name="payment"
+                >
+                  <option value="">Choose...</option>
+                  <option value="Paypal">PayPal</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Debit Card">Debit Card</option>
+                </select>
+                <div class="invalid-feedback">
+                  Please select a valid country.
+                </div>
+              </div>
+            </div>
+
+            <button class="w-100 btn btn-primary" type="submit">
+              Continue to checkout
+            </button>
+          </form>
+        </div>
+      </div>
+      <!--end col-->
+    </div>
+    <!--end row-->
+  </div>
+  <!--end container-->
+</section>
+
+{% endblock content %}
